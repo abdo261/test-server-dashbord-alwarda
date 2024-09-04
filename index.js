@@ -16,27 +16,26 @@ const io = new Server(server, {
   },
 });
 
-// Custom CORS function to handle multiple origins
-const allowedOrigins = [
-  'https://client-dashboard-alwarda.vercel.app',
-  'https://client-dashboard-alwa-git-ccae60-abdellah-ait-bachikhs-projects.vercel.app',
-  'https://client-dashboard-alwarda-nsi8li84g.vercel.app'
-];
+require("dotenv").config();
 
-const corsOptions = {
-  origin: function (origin, callback) {
-    if (allowedOrigins.indexOf(origin) !== -1 || !origin) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-};
+const userRouter = require("./router/user");
+const studentRouter = require("./router/student");
+const centreRouter = require("./router/centre");
+const levelRouter = require("./router/level");
+const subjectRouter = require("./router/subject");
+const paymentsRouter = require("./router/payment");
+const authRouterRouter = require("./router/auth");
 
 // Middleware
-app.use(cors(corsOptions));
+app.use(cors({
+  origin: [
+    'https://client-dashboard-alwarda.vercel.app',
+    'https://client-dashboard-alwa-git-ccae60-abdellah-ait-bachikhs-projects.vercel.app',
+    'https://client-dashboard-alwarda-nsi8li84g.vercel.app'
+  ],
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+}));
 app.use(express.json());
 
 // Routes
@@ -63,8 +62,10 @@ io.on("connection", (socket) => {
   });
 });
 
+
+// require('./jobs/createMonthlyFees')
 // Start the server
 const PORT = process.env.PORT || 5000;
-server.listen(PORT, '0.0.0.0', () => {
+server.listen(PORT,'0.0.0.0', () => {
   console.log(`Server is running on port ${PORT}`);
 });
