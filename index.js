@@ -7,27 +7,36 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: 'https://client-dashboard-alwarda.vercel.app',
+    origin: [
+      'https://client-dashboard-alwarda.vercel.app',
+      'https://client-dashboard-alwa-git-ccae60-abdellah-ait-bachikhs-projects.vercel.app',
+      'https://client-dashboard-alwarda-nsi8li84g.vercel.app'
+    ],
     methods: ["GET", "POST"],
   },
 });
 
-require("dotenv").config();
+// Custom CORS function to handle multiple origins
+const allowedOrigins = [
+  'https://client-dashboard-alwarda.vercel.app',
+  'https://client-dashboard-alwa-git-ccae60-abdellah-ait-bachikhs-projects.vercel.app',
+  'https://client-dashboard-alwarda-nsi8li84g.vercel.app'
+];
 
-const userRouter = require("./router/user");
-const studentRouter = require("./router/student");
-const centreRouter = require("./router/centre");
-const levelRouter = require("./router/level");
-const subjectRouter = require("./router/subject");
-const paymentsRouter = require("./router/payment");
-const authRouterRouter = require("./router/auth");
-
-// Middleware
-app.use(cors({
-  origin: 'https://client-dashboard-alwarda.vercel.app',
+const corsOptions = {
+  origin: function (origin, callback) {
+    if (allowedOrigins.indexOf(origin) !== -1 || !origin) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   allowedHeaders: ['Content-Type', 'Authorization'],
-}));
+};
+
+// Middleware
+app.use(cors(corsOptions));
 app.use(express.json());
 
 // Routes
