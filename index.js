@@ -7,7 +7,7 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: "*",
+    origin: 'https://client-dashboard-alwarda.vercel.app',
     methods: ["GET", "POST"],
   },
 });
@@ -54,10 +54,8 @@ io.on("connection", (socket) => {
   });
 });
 
-
-// require('./jobs/createMonthlyFees')
 // Start the server
 const PORT = process.env.PORT || 5000;
-server.listen(PORT,'0.0.0.0', () => {
+server.listen(PORT, '0.0.0.0', () => {
   console.log(`Server is running on port ${PORT}`);
 });
