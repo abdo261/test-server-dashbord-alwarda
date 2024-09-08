@@ -10,7 +10,9 @@ const io = new Server(server, {
     origin: [
       'https://client-dashboard-alwarda.vercel.app',
       'https://client-dashboard-alwa-git-ccae60-abdellah-ait-bachikhs-projects.vercel.app',
-      'https://client-dashboard-alwarda-nsi8li84g.vercel.app'
+      'https://client-dashboard-alwarda-nsi8li84g.vercel.app',
+      "https://client-dashboard-alwarda.vercel.app/",
+      "http://localhost:3000"
     ],
     methods: ["GET", "POST"],
   },
@@ -25,17 +27,27 @@ const levelRouter = require("./router/level");
 const subjectRouter = require("./router/subject");
 const paymentsRouter = require("./router/payment");
 const authRouterRouter = require("./router/auth");
+const authenticateJWT = require("./middleware/authenticateJWT");
 
 // Middleware
 app.use(cors({
   origin: [
     'https://client-dashboard-alwarda.vercel.app',
     'https://client-dashboard-alwa-git-ccae60-abdellah-ait-bachikhs-projects.vercel.app',
-    'https://client-dashboard-alwarda-nsi8li84g.vercel.app'
+    'https://client-dashboard-alwarda-nsi8li84g.vercel.app',
+    "https://client-dashboard-alwarda.vercel.app/",
+    "http://localhost:3000"
   ],
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   allowedHeaders: ['Content-Type', 'Authorization'],
 }));
+app.use((req, res, next) => {
+  const excludedRoutes = ["/api/auth/login"];
+  if (excludedRoutes.includes(req.path)) {
+    return next(); 
+  }
+  authenticateJWT(req, res, next);
+});
 app.use(express.json());
 
 // Routes

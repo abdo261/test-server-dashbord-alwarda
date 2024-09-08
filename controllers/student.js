@@ -10,7 +10,7 @@ async function createStudent(req, res) {
     phone,
     sex,
     registrationDate,
-    registredBy,
+    
     levelId,
     centreId,
     subjectIds,
@@ -22,7 +22,7 @@ async function createStudent(req, res) {
     phone,
     sex,
     registrationDate,
-    registredBy,
+    registredBy:parseInt(req.user.id),
     levelId,
     centreId,
     subjectIds,
@@ -30,8 +30,9 @@ async function createStudent(req, res) {
   if (error) {
     return res.status(400).json(error);
   }
+  console.log(req.user.id)
   try {
-    const user = await prisma.users.findUnique({ where: { id: registredBy } });
+    const user = await prisma.users.findUnique({ where: { id: parseInt(req.user.id)} });
     if (!user)
       return res.status(400).json({ message: "Utilisateur non trouvé" });
 
@@ -51,7 +52,7 @@ async function createStudent(req, res) {
         registrationDate: registrationDate
           ? new Date(registrationDate)
           : new Date(),
-        registredBy,
+        registredBy:parseInt(req.user.id),
         levelId,
         centreId,
         subjects: {
