@@ -7,6 +7,11 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
+    origin: [
+      'https://client-dashboard-alwarda.vercel.app',
+      'https://client-dashboard-alwa-git-ccae60-abdellah-ait-bachikhs-projects.vercel.app',
+      'https://client-dashboard-alwarda-nsi8li84g.vercel.app'
+    ],
     origin: "*",
     methods: ["GET", "POST"],
   },
@@ -23,7 +28,15 @@ const paymentsRouter = require("./router/payment");
 const authRouterRouter = require("./router/auth");
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: [
+    'https://client-dashboard-alwarda.vercel.app',
+    'https://client-dashboard-alwa-git-ccae60-abdellah-ait-bachikhs-projects.vercel.app',
+    'https://client-dashboard-alwarda-nsi8li84g.vercel.app'
+  ],
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+}));
 app.use(express.json());
 
 // Routes
