@@ -12,7 +12,6 @@ const io = new Server(server, {
       'https://client-dashboard-alwa-git-ccae60-abdellah-ait-bachikhs-projects.vercel.app',
       'https://client-dashboard-alwarda-nsi8li84g.vercel.app'
     ],
-    origin: "*",
     methods: ["GET", "POST"],
   },
 });
