@@ -61,28 +61,27 @@ app.use("/api/auth", authRouterRouter);
 
 
 
-const connectedClients = []; // Array to store connected user IDs
-const socketToUserMap = {}; // Mapping from socket IDs to user IDs
+const connectedClients = []; 
+const socketToUserMap = {}; 
 
 io.on('connection', (socket) => {
-  // Listen for the token sent by the client
+
   socket.on('conectCLintId', (token) => {
     try {
-      // Verify and decode the token to get user information
+
       const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secretkey');
       const userId = decoded.id;
 
-      // Add the user ID to the list
+
       if (!connectedClients.includes(userId)) {
         connectedClients.push(userId);
       }
 
-      // Map the socket ID to the user ID
       socketToUserMap[socket.id] = userId;
 
       console.log(`User connected: ${userId}`);
       
-      // Broadcast the list of connected clients to all clients
+  
       io.emit('connectedClients', connectedClients);
 
     } catch (err) {
@@ -90,23 +89,22 @@ io.on('connection', (socket) => {
     }
   });
 
-  // Handle disconnection
   socket.on('disconnect', () => {
-    // Find the user ID associated with this socket ID
+
     const userId = socketToUserMap[socket.id];
 
     if (userId) {
-      // Remove the user ID from the list
+
       const index = connectedClients.indexOf(userId);
       if (index !== -1) {
         connectedClients.splice(index, 1);
         console.log(`User disconnected: ${userId}`);
       }
-      // Remove the socket ID from the map
+     
       delete socketToUserMap[socket.id];
     }
 
-    // Broadcast the updated list of connected clients
+   
     io.emit('connectedClients', connectedClients);
   });
 });
