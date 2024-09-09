@@ -111,7 +111,7 @@ async function createStudent(req, res) {
         have50 = 50;
       } else if (isFirstPayment) {
         have50 = 50;
-        isFirstPayment = false;
+        isFirstPayment ;
       }
 
       await prisma.payments.create({
@@ -224,8 +224,8 @@ async function updateStudent(req, res) {
     levelId,
     centreId,
     subjectIds,
-    currentMonth = false,
-    school,
+    currentMonth ,
+    
   } = req.body;
 
   try {
@@ -289,17 +289,14 @@ async function updateStudent(req, res) {
 
     const currentDate = new Date();
 
-    // Define `updateFromDate` based on `currentMonth`
     let updateFromDate;
     if (currentMonth) {
-      // Update payments starting from the current month and future payments
       updateFromDate = new Date(
         currentDate.getFullYear(),
         currentDate.getMonth(),
         1
       );
     } else {
-      // Update future payments only (excluding the current month)
       updateFromDate = new Date(
         currentDate.getFullYear(),
         currentDate.getMonth() + 1,
@@ -311,8 +308,8 @@ async function updateStudent(req, res) {
     const paymentsToUpdate = await prisma.payments.findMany({
       where: {
         studentId: updatedStudent.id,
-        dueDate: {
-          gte: updateFromDate, // Update future payments (or current month if `currentMonth` is true)
+        startAt: {
+          gte: updateFromDate,
         },
       },
     });

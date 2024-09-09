@@ -2,7 +2,7 @@ const express = require("express");
 const cors = require("cors");
 const http = require("http");
 const { Server } = require("socket.io");
-
+const jwt = require('jsonwebtoken')
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
@@ -59,18 +59,55 @@ app.use("/api/users", userRouter);
 app.use("/api/payments", paymentsRouter);
 app.use("/api/auth", authRouterRouter);
 
-// Socket.IO event handling
-io.on("connection", (socket) => {
-  console.log(`User connected: ${socket.id}`);
 
-  socket.on("disconnect", () => {
-    console.log(`User disconnected: ${socket.id}`);
+
+const connectedClients = []; // Array to store connected user IDs
+const socketToUserMap = {}; // Mapping from socket IDs to user IDs
+
+io.on('connection', (socket) => {
+  // Listen for the token sent by the client
+  socket.on('conectCLintId', (token) => {
+    try {
+      // Verify and decode the token to get user information
+      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secretkey');
+      const userId = decoded.id;
+
+      // Add the user ID to the list
+      if (!connectedClients.includes(userId)) {
+        connectedClients.push(userId);
+      }
+
+      // Map the socket ID to the user ID
+      socketToUserMap[socket.id] = userId;
+
+      console.log(`User connected: ${userId}`);
+      
+      // Broadcast the list of connected clients to all clients
+      io.emit('connectedClients', connectedClients);
+
+    } catch (err) {
+      console.error('Token verification failed:', err);
+    }
   });
 
-  socket.on("message", (data) => {
-    console.log(`Message from ${socket.id}:`, data);
+  // Handle disconnection
+  socket.on('disconnect', () => {
+    // Find the user ID associated with this socket ID
+    const userId = socketToUserMap[socket.id];
 
-    io.emit("message", data);
+    if (userId) {
+      // Remove the user ID from the list
+      const index = connectedClients.indexOf(userId);
+      if (index !== -1) {
+        connectedClients.splice(index, 1);
+        console.log(`User disconnected: ${userId}`);
+      }
+      // Remove the socket ID from the map
+      delete socketToUserMap[socket.id];
+    }
+
+    // Broadcast the updated list of connected clients
+    io.emit('connectedClients', connectedClients);
   });
 });
 
