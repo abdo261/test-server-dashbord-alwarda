@@ -228,11 +228,11 @@ async function updateStudent(req, res) {
   } = req.body;
 
   try {
+    // Check if the user, level, and centre exist
     const user = await prisma.users.findUnique({
       where: { id: parseInt(registredBy) },
     });
-    if (!user)
-      return res.status(400).json({ message: "Utilisateur non trouvé" });
+    if (!user) return res.status(400).json({ message: "Utilisateur non trouvé" });
 
     const level = await prisma.levels.findUnique({
       where: { id: parseInt(levelId) },
@@ -244,6 +244,7 @@ async function updateStudent(req, res) {
     });
     if (!centre) return res.status(400).json({ message: "Centre non trouvé" });
 
+    // Update student with new subjects
     const updatedStudent = await prisma.students.update({
       where: { id: parseInt(id) },
       data: {
@@ -270,6 +271,7 @@ async function updateStudent(req, res) {
       },
     });
 
+    // Fetch new subjects and calculate total amount
     const subjects = await prisma.subjects.findMany({
       where: { id: { in: subjectIds.map((i) => parseInt(i)) } },
       include: { level: true },
@@ -289,13 +291,13 @@ async function updateStudent(req, res) {
     let oldSubjects = [];
 
     if (currentMonth) {
+      // Only update the current month's payment
       updateFromDate = new Date(
         currentDate.getFullYear(),
         currentDate.getMonth(),
         1
       );
-      const currentStartAt = new Date();
-      const monthName = currentStartAt.toLocaleString("default", {
+      const monthName = currentDate.toLocaleString("default", {
         month: "long",
       });
 
@@ -321,12 +323,10 @@ async function updateStudent(req, res) {
       },
     });
 
-    let isFirstPayment = true; // Flag to track the first payment
-
     for (const payment of paymentsToUpdate) {
-      const updatedSubjects = subjects.map((s) => {
-        if (isFirstPayment && currentMonth) {
-          // Retain the old subject values for the first payment if currentMonth is true
+      if (currentMonth && payment.startAt.getMonth() === currentDate.getMonth()) {
+        // Recalculate only for the current month
+        const updatedSubjects = subjects.map((s) => {
           const oldSubject = oldSubjects.find((old) => old.id === s.id);
           return {
             id: s.id,
@@ -337,32 +337,47 @@ async function updateStudent(req, res) {
             amountPaid: oldSubject ? oldSubject.amountPaid : 0,
             isPayed: oldSubject ? oldSubject.isPayed : false,
           };
-        } else {
-          // For future payments, set default values
-          return {
-            id: s.id,
-            name: s.name,
-            level: s.level.name,
-            pricePerMonth: s.pricePerMonth,
-            discount: totalSubjects > 1 ? 50 : 0,
+        });
+
+        const newAmountPaid = updatedSubjects.reduce(
+          (sum, s) => sum + s.amountPaid,
+          0
+        );
+        const newAmountDue = finalAmount - newAmountPaid;
+
+        await prisma.payments.update({
+          where: { id: payment.id },
+          data: {
+            totalAmount: finalAmount,
+            discount: totalSubjects > 1 ? 50 * totalSubjects : 0,
+            amountDue: newAmountDue,
+            amountPaid: newAmountPaid,
+            subjects: JSON.stringify(updatedSubjects),
+          },
+        });
+      } else {
+        // Set default values for future payments
+        const defaultSubjects = subjects.map((s) => ({
+          id: s.id,
+          name: s.name,
+          level: s.level.name,
+          pricePerMonth: s.pricePerMonth,
+          discount: totalSubjects > 1 ? 50 : 0,
+          amountPaid: 0,
+          isPayed: false,
+        }));
+
+        await prisma.payments.update({
+          where: { id: payment.id },
+          data: {
+            totalAmount: finalAmount,
+            discount: totalSubjects > 1 ? 50 * totalSubjects : 0,
+            amountDue: finalAmount,
             amountPaid: 0,
-            isPayed: false,
-          };
-        }
-      });
-
-      // Update the payment with new subjects and amounts
-      await prisma.payments.update({
-        where: { id: payment.id },
-        data: {
-          totalAmount: finalAmount,
-          discount: discount,
-          amountDue: finalAmount - payment.amountPaid,
-          subjects: JSON.stringify(updatedSubjects),
-        },
-      });
-
-      isFirstPayment = false; // After the first payment, set flag to false
+            subjects: JSON.stringify(defaultSubjects),
+          },
+        });
+      }
     }
 
     // Respond with success
@@ -377,6 +392,7 @@ async function updateStudent(req, res) {
     });
   }
 }
+
 
 
 async function deleteStudent(req, res) {
